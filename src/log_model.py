@@ -24,7 +24,4 @@ class LogEvent:
     def __str__(self) -> str:
         return f"[{self.level}] {self.service}: {self.message}"
     
-    def __repr__(self) -> str:
-        return f"[{self.level}] {self.service}: {self.message}"
-    
-  
+   
