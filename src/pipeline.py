@@ -11,21 +11,31 @@ def read_lines(path: str) -> Iterator[str]:
 
 def parse_events(lines: Iterable[str]) -> Iterator[LogEvent]:
     for line in lines:
+        if not line.strip():
+            continue
         try:
-            ts, level, service, msg, *rest = line.split("|")
+            # Split the 4 main fields by pipe and strip whitespace
+            parts = [p.strip() for p in line.split("|")]           
+            ts_str, level, service = parts[0], parts[1], parts[2]
+
+            # Handle message and meta based on the number of pipes
             meta = {}
-            if rest:
-              for pair in rest[0].split(","):
-                if not pair:
-                    continue
-            k, v = pair.split("=", 1)
-            meta[k] = v
+            if len(parts) >= 5:
+                message = parts[3]
+                kv_section = parts[4]
+                for pair in kv_section.split(","):
+                    if "=" in pair:
+                        k, v = pair.split("=", 1)
+                        meta[k.strip()] = v.strip()
+            else:
+                message = parts[3]
+       
             yield LogEvent(
-                timestamp=datetime.fromisoformat(ts),
+                timestamp=datetime.fromisoformat(ts_str),
                 level=level,
                 service=service,
-                message=msg,
-                meta=meta,
+                message=message,
+                meta=meta
             )
         except Exception as e:
             raise LogParseError(f"Malformed line: {line!r}") from e
